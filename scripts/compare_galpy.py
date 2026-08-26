@@ -20,6 +20,7 @@ plt.rcParams["axes.unicode_minus"] = False
 
 from galpy.potential import MWPotential2014, vcirc as gvcirc
 from galpy.orbit import Orbit
+import astropy.units as u
 
 from cosmogeo import potential as cpot
 from cosmogeo import orbit as corbit
@@ -75,47 +76,74 @@ plt.tight_layout()
 plt.savefig("rotation_compare.png", dpi=120)
 print("图1 rotation_compare.png 已保存")
 
-# ---- 2. 圆轨道对比（同一初始条件：R=8.2kpc 圆轨道 + 1% 扰动）----
-# galpy 轨道（MWPotential2014）
-# galpy 1.12：物理单位构造（astropy）+ Orbit([R, vR, vT, z, vz, phi])——vT 在第 3 位！
-import astropy.units as u
-vT_phys = gvcirc(MWPotential2014, R_SUN_KPC / G_RO) * G_VO  # km/s
-o_galpy = Orbit([R_SUN_KPC * u.kpc, 0 * u.km / u.s, vT_phys * 0.99 * u.km / u.s,
+# ---- 2. 椭圆轨道 + 近日点进动对比（明显椭圆：vT = 0.7·v_circ）----
+def perihelion_angles(r_arr, th_arr):
+    """检测 r(t) 局部极小（近日点），返回 (角度列表, 每圈进动列表).
+
+    用 r 的局部极小（前后都比它大）找近日点；角度用 unwrap。
+    """
+    peris = []
+    for i in range(1, len(r_arr) - 1):
+        if r_arr[i] < r_arr[i-1] and r_arr[i] < r_arr[i+1] and r_arr[i] < 0.95*r_arr.max():
+            peris.append(i)
+    if len(peris) < 2:
+        return [], []
+    ang = np.unwrap(th_arr)
+    angles = [ang[i] for i in peris]
+    # 每圈进动 = 相邻近日点角度差 − 2π
+    precess = []
+    for k in range(1, len(angles)):
+        precess.append((angles[k] - angles[k-1]) - 2*np.pi)
+    return angles, precess
+
+ECCENTRIC_FRAC = 0.7  # 明显椭圆
+
+# galpy 椭圆轨道（物理单位）
+vT_ecc = gvcirc(MWPotential2014, R_SUN_KPC / G_RO) * G_VO * ECCENTRIC_FRAC
+o_galpy = Orbit([R_SUN_KPC * u.kpc, 0 * u.km / u.s, vT_ecc * u.km / u.s,
                  0 * u.kpc, 0 * u.km / u.s, 0 * u.rad])
-ts_orb = np.linspace(0, 3.0, 400) * u.Gyr  # 3 Gyr 物理时间
+ts_orb = np.linspace(0, 2.0, 3000) * u.Gyr  # 2 Gyr 覆盖多圈
 o_galpy.integrate(ts_orb, MWPotential2014)
-
-# 几何论轨道（渗透势，2D 积分 3 Gyr）
-v0 = cpot.v_circ(R_SUN_KPC * KPC, M_CAL)
-o_geo = corbit.integrate_orbit(R_SUN_KPC * KPC, 0.0, v0 * 0.99, M_CAL,
-                               t_total=3.0 * 1e9 * YEAR, dt=1e6 * YEAR)
-x_geo = np.array(o_geo["r"]) * np.cos(np.array(o_geo["theta"])) / KPC
-y_geo = np.array(o_geo["r"]) * np.sin(np.array(o_geo["theta"])) / KPC
-
-fig2, ax2 = plt.subplots(1, 2, figsize=(13, 5))
-# galpy 轨道投影
-xgal = np.array(o_galpy.x(ts_orb))  # 数组调用 → 物理 kpc
+xgal = np.array(o_galpy.x(ts_orb))
 ygal = np.array(o_galpy.y(ts_orb))
-ax2[0].plot(xgal, ygal, "b-", lw=1.2, label="galpy（MWPotential2014，含暗物质）")
-ax2[0].set_title("galpy 轨道（3 Gyr）")
+r_gal = np.hypot(xgal, ygal)
+th_gal = np.arctan2(ygal, xgal)
+peri_gal, prec_gal = perihelion_angles(r_gal, th_gal)
+prec_gal_deg = [p * 180 / np.pi for p in prec_gal]
+
+# 几何论椭圆轨道（渗透势）
+v0 = cpot.v_circ(R_SUN_KPC * KPC, M_CAL)
+o_geo = corbit.integrate_orbit(R_SUN_KPC * KPC, 0.0, v0 * ECCENTRIC_FRAC, M_CAL,
+                               t_total=2.0 * 1e9 * YEAR, dt=1e5 * YEAR)
+r_geo_arr = np.array(o_geo["r"]) / KPC
+th_geo_arr = np.array(o_geo["theta"])
+peri_geo, prec_geo = perihelion_angles(r_geo_arr, th_geo_arr)
+prec_geo_deg = [p * 180 / np.pi for p in prec_geo]
+
+print(f"galpy 椭圆轨道: r 范围 [{r_gal.min():.2f}, {r_gal.max():.2f}] kpc, "
+      f"近日点数 {len(peri_gal)}, 进动 {prec_gal_deg[0] if prec_gal_deg else 0:.3f} 度/圈")
+print(f"几何论椭圆轨道: r 范围 [{r_geo_arr.min():.2f}, {r_geo_arr.max():.2f}] kpc, "
+      f"近日点数 {len(peri_geo)}, 进动 {prec_geo_deg[0] if prec_geo_deg else 0:.3f} 度/圈")
+
+# 图：椭圆轨道 + 进动
+fig2, ax2 = plt.subplots(1, 2, figsize=(13, 5))
+ax2[0].plot(xgal, ygal, "b-", lw=0.8, alpha=0.7, label="galpy（MWPotential2014）")
+if peri_gal:
+    p0 = int(peri_gal[0])
+    ax2[0].scatter([xgal[p0]], [ygal[p0]], color="k", s=30, label="近日点")
+ax2[0].set_title(f"galpy 椭圆轨道（进动 {prec_gal_deg[0] if prec_gal_deg else 0:.2f}°/圈）")
 ax2[0].set_xlabel("x (kpc)"); ax2[0].set_ylabel("y (kpc)")
 ax2[0].set_aspect("equal"); ax2[0].legend(fontsize=8)
-ax2[1].plot(x_geo, y_geo, "r-", lw=1.2, label="几何论（渗透势，无暗物质）")
-ax2[1].set_title("几何论轨道（3 Gyr）")
+x_geo = r_geo_arr * np.cos(th_geo_arr)
+y_geo = r_geo_arr * np.sin(th_geo_arr)
+ax2[1].plot(x_geo, y_geo, "r-", lw=0.8, alpha=0.7, label="几何论（渗透势）")
+if peri_geo:
+    pg0 = int(peri_geo[0])
+    ax2[1].scatter([x_geo[pg0]], [y_geo[pg0]], color="k", s=30, label="近日点")
+ax2[1].set_title(f"几何论椭圆轨道（进动 {prec_geo_deg[0] if prec_geo_deg else 0:.2f}°/圈）")
 ax2[1].set_xlabel("x (kpc)"); ax2[1].set_ylabel("y (kpc)")
 ax2[1].set_aspect("equal"); ax2[1].legend(fontsize=8)
 plt.tight_layout()
 plt.savefig("orbit_compare.png", dpi=120)
-print("图2 orbit_compare.png 已保存")
+print("图2 orbit_compare.png（椭圆+进动）已保存")
 
-# ---- 轨道周期对比 ----
-ang_gal = np.unwrap(np.arctan2(ygal, xgal))
-print(f"galpy 3 Gyr 转角 = {(ang_gal[-1]-ang_gal[0])/(2*np.pi):.1f} 圈（应 ~13，周期 ~230 Myr）")
-r_gal = np.hypot(xgal, ygal)
-# 几何论周期（已知函数）
-T_geo_myr = corbit.orbital_period(R_SUN_KPC * KPC, M_CAL) / 1e6
-print(f"几何论圆轨道周期 = {T_geo_myr:.0f} Myr（太阳绕银心观测 ~230）")
-# galpy 轨道半径波动
-print(f"galpy 轨道 r 范围 = [{r_gal.min():.2f}, {r_gal.max():.2f}] kpc")
-r_geo_arr = np.array(o_geo["r"]) / KPC
-print(f"几何论轨道 r 范围 = [{r_geo_arr.min():.2f}, {r_geo_arr.max():.2f}] kpc")
