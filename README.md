@@ -1,8 +1,15 @@
 # cosmo-geometry
 
-[![PyPI](https://img.shields.io/badge/version-0.1.0-blue)](https://pypi.org/project/cosmo-geometry/)
+**几何论宇宙学计算库** —— **观测锚定 + 动态演化 + 静态计算**（v0.11.0）。
 
-**几何论宇宙学闭式库** —— 用共扼谱几何（Conjugate Spectral Geometry, CSG）直接给出天体宇宙物理计算项目想要的闭式结果。
+实用主义路线：凡几何论理论未闭合处，一律用**现有实验观测数据锚定**
+（见 `anchors` 模块），锚定后即可做时间演化与闭式计算——不需要理论闭环，
+像 galpy 一样拿观测就用。
+
+```bash
+pip install cosmo-geometry
+python3 scripts/quickstart.py   # 快速上手：锚定 → 动态 + 静态
+```
 
 ## 思路：项目目的 → 几何论直接给结果
 

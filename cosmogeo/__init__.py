@@ -16,14 +16,15 @@
   - dwarf:    矮星系旋转曲线（8.2/8.18）→ core 型（无暗物质）vs NFW cusp
   - expansion:动态宇宙膨胀（0.14/0.15）→ 八相变解析解、H(z)、距离模量、红移漂移
   - stream:   恒星流（0.9）→ 流粒子采样 + 数值/解析展开（对照 galpy StreamTrack)
-  - actionangle:作用量-角（0.10）→ (JR,Jφ,Jz) + 频率 κ/Ω/ν（对照 galpy aainv）
+  - actionangle:作用量-角（0.10）→ (JR,Jφ,Jz) + 频率 κ/Ω/ν（对照 galpy aainv)
+  - anchors:   观测锚定数据（0.11）→ 地月/水星/银河系/CMB/宇宙学观测输入集中管理
 """
 from . import (constants, rotation, hubble, cmb, lensing, galaxy, potential,
-                   distribution, orbit, solar, satellite, df, dwarf, expansion, stream, actionangle)
+                   distribution, orbit, solar, satellite, df, dwarf, expansion, stream, actionangle, anchors)
 
 __version__ = "0.4.0"
 
 __all__ = [
     "constants", "rotation", "hubble", "cmb", "lensing",
-    "galaxy", "potential", "distribution", "orbit", "solar", "satellite", "df", "dwarf", "expansion", "stream", "actionangle", "__version__",
+    "galaxy", "potential", "distribution", "orbit", "solar", "satellite", "df", "dwarf", "expansion", "stream", "actionangle", "anchors", "__version__",
 ]
