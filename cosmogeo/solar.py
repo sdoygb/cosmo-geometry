@@ -71,3 +71,34 @@ def etno_attractor() -> float:
 def spectral_gap_stability() -> dict:
     """长期稳定性（8.10 §14）：谱间隙 μ₂ = 5.18 切断 Arnold 扩散主通道."""
     return {"mu2": 5.18, "suppression": "exp(-8e4)", "timescale_years": 1e9}
+
+
+# ---- 动态扩展：水星近日点进动 ω(t)（0.7.0，8.8 严格定理）----
+MERCURY_PRECESSION_ARCSEC_CENTURY = 42.98   # 8.8：观测 43.0±0.1，偏差 <0.05%
+MERCURY_PRECESSION_ARCSEC_ORBIT = 0.1035    # 每圈进动（8.8 §5.4）
+MERCURY_PERIOD_DAY = 87.969
+MERCURY_SEMI_MAJOR_AU = 0.387              # a=5.791e10 m = 0.387 AU
+MERCURY_ECCENTRICITY = 0.20563
+
+
+def mercury_precession_per_century() -> float:
+    """水星近日点进动 42.98 角秒/世纪（8.8，观测 43.0±0.1，偏差 <0.05%）."""
+    return MERCURY_PRECESSION_ARCSEC_CENTURY
+
+
+def mercury_precession_angle(t_centuries: float) -> float:
+    """近日点经度演化 ω(t) = 42.98·t（角秒）——动态.
+
+    t_centuries 为世纪数（t>0 未来、t<0 过去）。
+    """
+    return MERCURY_PRECESSION_ARCSEC_CENTURY * t_centuries
+
+
+def mercury_orbits_per_century() -> float:
+    """每世纪轨道圈数 N = 100×365.25/T ≈ 415.2（8.8 §5.4）."""
+    return 100.0 * 365.25 / MERCURY_PERIOD_DAY
+
+
+def mercury_precession_per_orbit() -> float:
+    """每圈进动 0.1035 角秒（8.8 §5.4）."""
+    return MERCURY_PRECESSION_ARCSEC_ORBIT

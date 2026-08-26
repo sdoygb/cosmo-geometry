@@ -64,3 +64,34 @@ def four_stage_epochs() -> dict:
         "gap_days": 7.0 * tau_dec_s / 86400.0,        # 间隙阶段 7·τ_dec ≈ 50.7 日
         "maha_cycle_years": 2.0 * t_sector + 9.0 * tau_dec_s / YEAR_S,
     }
+
+
+# ---- 动态扩展：宇宙年龄-红移 t(z)（0.7.0）----
+def cosmic_age(z: float, steps: int = 800) -> float:
+    """宇宙年龄 t(z) = ∫_z^∞ dz'/((1+z')H(z'))（Gyr）.
+
+    动态：从红移 z 到现在（t=0 对应现在）的宇宙年龄。
+    换元 r=ln(1+z')：t(z) = ∫_{ln(1+z)}^{∞} dr/H(z'(r))，对数网格均匀。
+    t(0) ≈ 宇宙年龄（对比 Planck 138 亿年）。
+    """
+    from .expansion import hubble_hz_si
+    import math
+    r_lo = math.log(1.0 + max(z, 0.0))
+    r_hi = math.log(1.0 + 1e4)
+    dr = (r_hi - r_lo) / steps
+    total = 0.0
+    prev = None
+    for i in range(steps + 1):
+        r = r_lo + dr * i
+        zz = math.exp(r) - 1.0
+        val = 1.0 / hubble_hz_si(zz)
+        if prev is not None:
+            total += 0.5 * (prev + val) * dr  # 梯形
+        prev = val
+    GYR = 3.15576e7 * 1e9
+    return total / GYR
+
+
+def age_universe_gyr() -> float:
+    """宇宙年龄 t(0)（Gyr）——动态：由 H(z) 积分得出."""
+    return cosmic_age(0.0)

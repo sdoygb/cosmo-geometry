@@ -68,3 +68,33 @@ def recession_rate_cm_year() -> float:
 def tidal_lock_period_day() -> float:
     """潮汐锁定（本征值简并）下月球同步自转-公转周期 27.32 日."""
     return MOON_ORBITAL_PERIOD_DAY
+
+
+# ---- 动态扩展：地月距离时间演化 a(t)（0.7.0，8.12 §4）----
+def moon_distance_evolution(t_years: float) -> float:
+    """地月距离时间演化 a(t) = a₀ − (3.8 cm/年)·(t₀−t)（km）.
+
+    动态：以当前时刻 t=0 为原点，向过去积分退行速率 3.8 cm/年
+    （8.12 §4 跨扇区信息流标度；慢化因子 𝒮_macro 未封闭，诚实标注）。
+    t_years > 0 回到过去（a 更小），t_years < 0 走向未来（a 更大）。
+    """
+    a0 = EARTH_MOON_DISTANCE_KM
+    recession_km_per_year = MOON_RECESSION_CM_YEAR / 1e5  # cm → km
+    # 过去 t 年前：距离 = a0 - 退行量（过去更近）；未来：更远
+    return a0 - recession_km_per_year * t_years
+
+
+def moon_distance_past(myr: float) -> float:
+    """百万年前的地月距离（km）——动态回溯."""
+    return moon_distance_evolution(myr * 1e6)
+
+
+def tidal_lock_epoch() -> dict:
+    """潮汐锁定时代回溯（8.12：锁定=本征值简并）.
+
+    当前 a₀=384400 km；回溯到 a=2.5R⊕≈1.6e4 km（Roche 极限附近）
+    所需时间 ≈ (384400-16000)km/(3.8e-5 km/年) ≈ 9.7e9 年。
+    """
+    a_min = 1.6e4  # km（≈2.5 R_⊕）
+    t = (EARTH_MOON_DISTANCE_KM - a_min) / (MOON_RECESSION_CM_YEAR / 1e5)
+    return {"epoch_years_ago": t, "a_min_km": a_min, "note": "慢化因子未封闭，线性外推"}

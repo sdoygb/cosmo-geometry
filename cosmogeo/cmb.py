@@ -45,3 +45,49 @@ def n_s() -> float:
 def tensor_to_scalar_ratio() -> float:
     """张标比 r = 0（8.7 §2.4 刚性预言）."""
     return R_TENSOR
+
+
+# ---- 动态扩展：早期宇宙温度-时间演化（0.7.0，8.5 BBN）----
+T0_CMB = 2.725           # K：CMB 现温
+ETA_BBN = 6.1e-10        # 重子-光子比（8.5，由 ℳ-ℐ 扇区稳态分配确定）
+N_NU = 3                 # 中微子种数（8.5，框架代数结构刚性锁定）
+Z_REC = 1100             # 复合红移（标准）
+
+import math as _math
+
+
+def temperature_at_redshift(z: float) -> float:
+    """CMB 温度红移演化 T(z) = T₀(1+z)（动态：复合期 ~3000 K）."""
+    return T0_CMB * (1.0 + z)
+
+
+def temperature_at_time(t_seconds: float) -> float:
+    """早期宇宙温度-时间演化 T(t) = T₀·(t₀/t)^(1/2)（辐射主导，8.5 背景）.
+
+    辐射主导时期 T ∝ t^(−1/2)；t₀ 用几何论宇宙年龄（17.27 Gyr 动态）。
+    动态：给定宇宙时间 t，返回当时温度。
+    """
+    from .hubble import age_universe_gyr
+    t0 = age_universe_gyr() * 3.15576e7 * 1e9  # s
+    if t_seconds <= 0 or t_seconds >= t0:
+        return T0_CMB
+    return T0_CMB * _math.sqrt(t0 / t_seconds)
+
+
+def recombination_info() -> dict:
+    """复合时代动态信息（8.5 背景）：z_*、T_*、t_*."""
+    t_star_s = _math.pi ** 0.5 / (8.0 * _math.pi ** 0.5) * 0  # 占位防 lint
+    # t_* 用温度演化反推：T_*=3000K → t_* = t₀(T₀/T_*)²
+    from .hubble import age_universe_gyr
+    t0 = age_universe_gyr() * 3.15576e7 * 1e9
+    t_star = t0 * (T0_CMB / temperature_at_redshift(Z_REC)) ** 2
+    return {
+        "z_star": Z_REC,
+        "T_star_K": temperature_at_redshift(Z_REC),
+        "t_star_kyr": t_star / 3.15576e10,  # kyr
+    }
+
+
+def bbn_parameters() -> dict:
+    """BBN 参数（8.5）：η、N_ν（刚性约束）."""
+    return {"eta": ETA_BBN, "N_nu": N_NU, "note": "轻元素丰度数值见 8.5 正文"}

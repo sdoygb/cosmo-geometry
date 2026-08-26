@@ -60,3 +60,34 @@ def maxwell_from_sigma(sigma: float, n_bins: int = 50) -> dict:
     返回峰值速度 v_peak = √2·σ（对照 galpy DF 采样的速度矩诊断）.
     """
     return {"v_peak": math.sqrt(2.0) * sigma, "v_rms": math.sqrt(3.0) * sigma}
+
+
+# ---- 动态扩展：轨道采样（0.7.0，DF → orbit 动态演化）----
+def sample_orbit(r0: float, m: float, a0: float = A0, seed: float = 0.42) -> dict:
+    """从速度分布采样轨道并动态积分（对照 galpy DF 采样目的）.
+
+    1. 采样径向/切向速度：σ_profile(r0) 高斯 + 各向同性
+    2. 用 orbit.integrate_orbit 动态演化（Cromer，角动量守恒）
+    返回 {v_sampled, orbit}——DF 的相空间采样 → 轨道时间演化。
+    """
+    import random
+    from .distribution import sigma_profile, osipkov_merritt_beta
+    from .potential import v_esc as v_esc_fn
+    from .orbit import integrate_orbit
+    random.seed(seed)
+    sig = sigma_profile(r0, m, a0)
+    v_esc_r = v_esc_fn(r0, m, a0)
+    # 高斯采样（截断于 v_esc）
+    v = 0.0
+    for _ in range(50):
+        cand = abs(random.gauss(0, sig))
+        if cand < v_esc_r:
+            v = cand
+            break
+    else:
+        v = sig
+    # 各向同性分解（β=0）
+    vr = v / 3.0 ** 0.5
+    vt = v * (2.0 / 3.0) ** 0.5
+    orb = integrate_orbit(r0, vr, vt, m, t_total=1.0, dt=0.01)
+    return {"v_sampled": v, "vr": vr, "vt": vt, "orbit": orb}
