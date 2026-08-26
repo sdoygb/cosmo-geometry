@@ -91,6 +91,7 @@ galaxy.v_flat_km_s()                                    # 235 km/s
 | `solar` | 8.10 | 提丢斯-波得 r₀=0.3087 AU、行星预言表、S_orbital=S_e·2ⁿ、共振、ETNOs ω=247.28° |
 | `satellite` | 8.12 | 地月系统：周期比 5α、质量比 81、退行速率、潮汐锁定 |
 | `df` | 8.11/8.18 | 高斯速度 DF、σ_profile 分段、Osipkov-Merritt β(r) |
+| `dwarf` | 8.2/8.18 | 矮星系旋转曲线：core 型（无暗物质）vs NFW cusp（小尺度危机解） |
 
 ## 验证
 

@@ -83,6 +83,23 @@ def sigma_bulge() -> float:
     return 100.0e3
 
 
+def solar_lock_position(m: float = 1.2e41, a0: float = A0) -> dict:
+    """太阳位置 = 速度锁定壳层论证（8.11 §3.3/§5.4 + 8.18）.
+
+    r_crit = √(G_eff·M/a_0) 为 a_N = a_0 速度锁定壳层；太阳 r_⊙ ≈ 8.2 kpc
+    恰在其上（文章 8.11 §5.4 标注太阳精确位置为启发式，本函数给出
+    锁定壳层的数值锚定：r_crit ≈ r_⊙ 偏差 ~1%）。
+    返回 {r_crit_kpc, r_sun_kpc, ratio}。
+    """
+    r_crit = critical_radius(m, a0)
+    r_sun_kpc = 8.2
+    return {
+        "r_crit_kpc": r_crit / 3.0857e19,
+        "r_sun_kpc": r_sun_kpc,
+        "ratio": (r_crit / 3.0857e19) / r_sun_kpc,
+    }
+
+
 def scale_radius_kpc() -> float:
     """总星系联合截面特征标度 R_c^gal ≈ 11.7 kpc（8.11 §3.1）."""
     return R_C_GAL / 1e3  # kpc
