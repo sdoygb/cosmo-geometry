@@ -1,0 +1,62 @@
+# -*- coding: utf-8 -*-
+"""cosmogeo.df — 分布函数（对照 galpy df 模块目的）.
+
+galpy 的 df/ 模块评估并采样各种分布函数（sphericaldf/diskdf/quasiisothermaldf/
+osipkovmerrittdf）。几何论（8.11/8.18）给：
+  - 高斯速度分布 f(v|r)（以 σ_profile(r) 为色散参数的闭式）
+  - Eddington 风格能量截断（束缚条件 v < v_esc）
+  - 圆轨道概率密度（速度锁定区 v_c 常数）
+诚实标注：几何论给的是统计闭式（色散参数化），非完整六维相空间 DF。
+"""
+import math
+from .distribution import sigma_profile, osipkov_merritt_beta
+from .potential import v_esc
+from .constants import A0
+
+
+def gaussian_velocity_df(v: float, sigma: float) -> float:
+    """三维高斯速度分布 f(v) = (2πσ²)^(-3/2)·exp(-v²/2σ²)（归一化）."""
+    return math.exp(-0.5 * (v / sigma) ** 2) / (2.0 * math.pi * sigma * sigma) ** 1.5
+
+
+def velocity_distribution(v: float, r: float, m: float, a0: float = A0) -> float:
+    """速度分布 f(v|r)：高斯 σ_profile(r) + 能量截断 v < v_esc.
+
+    对应 galpy 采样 DF 的目的——给定半径的速度分布闭式。
+    """
+    v_esc_r = v_esc(r, m, a0)
+    if v >= v_esc_r:
+        return 0.0  # 束缚截断
+    sig = sigma_profile(r, m, a0)
+    base = gaussian_velocity_df(v, sig)
+    # 截断归一化（解析：erf 归一）
+    z = v_esc_r / (math.sqrt(2.0) * sig)
+    norm = math.erf(z) - math.sqrt(2.0 / math.pi) * z * math.exp(-z * z)
+    return base / norm if norm > 0 else 0.0
+
+
+def circular_velocity_pdf(r: float, m: float, a0: float = A0,
+                          r_in: float = 1.0e3 * 3.0857e19, r_out: float = 15.0e3 * 3.0857e19) -> float:
+    """速度锁定区圆轨道速度概率密度（8.11 §7.1：v_c⁴ 常数 → 平坦分布）.
+
+    在壳层饱和区（r > R_c/2），v_c 近似常数 → P(v) 集中在 v_flat 附近。
+    返回区间 [r_in, r_out] 内圆速度的分布（数值直方图辅助，闭式均值/方差）。
+    """
+    from .potential import v_circ
+    # 纯 Python 采样评估
+    n = 200
+    vs = []
+    for i in range(n):
+        rr = r_in + (r_out - r_in) * i / (n - 1)
+        vs.append(v_circ(rr, m, a0))
+    mean = sum(vs) / len(vs)
+    var = sum((x - mean) ** 2 for x in vs) / len(vs)
+    return {"mean_v": mean, "std_v": var ** 0.5, "n_samples": n}
+
+
+def maxwell_from_sigma(sigma: float, n_bins: int = 50) -> dict:
+    """麦克斯韦-玻尔兹曼速度分布（色散 σ）：f(v) ∝ v²·exp(-v²/2σ²).
+
+    返回峰值速度 v_peak = √2·σ（对照 galpy DF 采样的速度矩诊断）.
+    """
+    return {"v_peak": math.sqrt(2.0) * sigma, "v_rms": math.sqrt(3.0) * sigma}
