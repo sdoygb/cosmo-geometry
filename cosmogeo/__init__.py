@@ -6,9 +6,16 @@
   - hubble:   哈勃常数与时间标度（8.16）→ H_0^geo≈68.9、τ_M、四阶段
   - cmb:      CMB 声学峰（8.7）→ l₁≈220、n_s≈0.965、r=0
   - lensing:  引力透镜（8.2 §3.2）→ α_eff、M_DM^apparent
+  - galaxy:   银河系结构（8.11）→ v_flat≈235 km/s、R_c^gal≈11.7 kpc、壳层 β=2
+  - potential:渗透函数势（8.18）→ Φ(r)、v_circ、v_esc
+  - distribution: 速度矩（8.18）→ σ_r/σ_t/beta（对照 galpy sphericaldf）
+  - orbit:    圆轨道闭式 + 数值积分（对照 galpy orbit integration）
 """
-from . import constants, rotation, hubble, cmb, lensing
+from . import constants, rotation, hubble, cmb, lensing, galaxy, potential, distribution, orbit
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
-__all__ = ["constants", "rotation", "hubble", "cmb", "lensing", "__version__"]
+__all__ = [
+    "constants", "rotation", "hubble", "cmb", "lensing",
+    "galaxy", "potential", "distribution", "orbit", "__version__",
+]

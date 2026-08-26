@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cosmo-geometry"
-version = "0.1.0"
+version = "0.2.0"
 description = "几何论宇宙学闭式库：用共扼谱几何（CSG）直接给出天体物理计算项目想要的闭式结果（旋转曲线/哈勃常数/CMB/透镜，无需暗物质与暗能量）"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "sdoygb", email = "sdoygb@gmail.com" }]
-keywords = ["cosmology", "conjugate-spectral-geometry", "dark-matter-free", "closed-form", "rotation-curve", "cmb", "hubble"]
+keywords = ["cosmology", "galactic-dynamics", "rotation-curve", "galpy"], "conjugate-spectral-geometry", "dark-matter-free", "closed-form", "rotation-curve", "cmb", "hubble"]
 dependencies = []
 
 [project.urls]

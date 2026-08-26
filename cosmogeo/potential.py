@@ -1,0 +1,69 @@
+# -*- coding: utf-8 -*-
+"""cosmogeo.potential — 渗透函数势（8.18，对照 galpy 的势场/轨道目的）.
+
+galpy 在势场中积分轨道（NFW、Miyamoto-Nagai 等势模型）。
+几何论 8.18 给渗透函数加速度 a = a_N·√(1 + r²/r_M²)，其中
+  a_N = G·M/r²（重子，含 𝒞 扇区重标定），r_M = √(G·M/a_0)（渗透半径）。
+由此：
+  - 圆轨道速度 v_circ(r) = √(r·a(r))（闭式）
+  - 逃逸速度 v_esc(r) = √(2|Φ(r)|)，势 Φ(r) = -∫_r^∞ a(r')dr'
+  - 势的数值积分（纯 Python，零依赖）
+"""
+from .constants import G, A0
+from .rotation import g_eff
+
+
+def permeation_radius(m: float, a0: float = A0) -> float:
+    """渗透半径 r_M = √(G_eff·M/a_0)（8.18，a_N·a_0 项与 a_N² 项平衡处）."""
+    return (g_eff() * m / a0) ** 0.5
+
+
+def accel(r: float, m: float, a0: float = A0) -> float:
+    """渗透函数加速度 a(r) = a_N·√(1 + r²/r_M²)（8.18 定理 8.18.8.01 等价形式）."""
+    a_n = g_eff() * m / r ** 2
+    r_m = permeation_radius(m, a0)
+    return a_n * (1.0 + (r / r_m) ** 2) ** 0.5
+
+
+def v_circ(r: float, m: float, a0: float = A0) -> float:
+    """圆轨道速度 v_circ(r) = √(r·a(r))（对照 galpy rotation curve）."""
+    return (r * accel(r, m, a0)) ** 0.5
+
+
+def potential(r: float, m: float, a0: float = A0, steps: int = 2000,
+              r_boundary: float | None = None) -> float:
+    """渗透函数势 Φ(r) = -∫_r^{r_b} a(r')dr'（数值积分，对数网格）.
+
+    返回负值势能（m²/s²）。默认边界 r_b = 1e6·r_M（数学近似无穷远，用于
+    v_esc 数学定义）；传入 r_boundary（如银河系边界 ~100 kpc）得到有限
+    逃逸速度，贴近观测。
+    """
+    import math
+    r_m = permeation_radius(m, a0)
+    r_b = r_boundary if r_boundary is not None else 1e6 * r_m
+    if r_b <= r:
+        return 0.0
+    log_lo, log_hi = math.log(r), math.log(r_b)
+    total = 0.0
+    prev_r = r
+    prev_a = accel(prev_r, m, a0)
+    for i in range(1, steps + 1):
+        rr = math.exp(log_lo + (log_hi - log_lo) * i / steps)
+        aa = accel(rr, m, a0)
+        total += 0.5 * (prev_a + aa) * (rr - prev_r)  # 梯形
+        prev_r, prev_a = rr, aa
+    return -total
+
+
+def v_esc(r: float, m: float, a0: float = A0, r_boundary: float | None = None) -> float:
+    """逃逸速度 v_esc = √(2|Φ(r)|)（对照 galpy escape velocity）.
+
+    默认数学无穷远（可偏大）；传 r_boundary（如 30 kpc）贴近银河系
+    有限边界逃逸速度观测（~500-550 km/s）。
+    """
+    return (2.0 * abs(potential(r, m, a0, r_boundary=r_boundary))) ** 0.5
+
+
+def circular_angular_freq(r: float, m: float, a0: float = A0) -> float:
+    """圆轨道角频率 Ω = v_circ/r（对照 galpy orbit 的 Omega）."""
+    return v_circ(r, m, a0) / r

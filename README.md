@@ -41,7 +41,29 @@ cmb.first_peak_l()       # → 220.0
 cmb.n_s()                # → 0.965
 ```
 
+## 对照 galpy：目的 → 几何论实现
+
+我们曾向 [galpy](https://github.com/jobovy/galpy)（Galactic Dynamics in python，★284，Jo Bovy）提交过 PR（#1345，sphericaldf `ro=` 修复，作者确认正确但嫌扩展过大关闭）。galpy 想达到的最终目的——**银河系动力学建模：轨道积分、分布函数、作用量-角坐标、暗物质晕拟合**——用几何论直接实现：
+
+| galpy 能力 | 几何论实现 | 验证结果 |
+|---|---|---|
+| 旋转曲线 `v_circ(r)` | `potential.v_circ`（渗透函数闭式） | 太阳位置 227 km/s（观测 ~220） |
+| 势场/逃逸速度 | `potential.potential`/`v_esc` | v_esc(100kpc)=438 km/s（观测 500-550 量级） |
+| 速度矩 `sigmar/sigmat/beta` | `distribution.*` | σ_r≈161 km/s（各向同性近似） |
+| 轨道积分 | `orbit.integrate_orbit` | 圆轨道稳定，周期 221.8 Myr（观测 ~230） |
+| 作用量-角坐标 | `orbit.circular_action` | 圆轨道 J=L 闭式 |
+| 银河系旋转/尺度（8.11） | `galaxy.*` | v_flat=235、R_c=11.7 kpc、壳层 β=2 |
+| 暗物质晕质量（NFW） | 无需暗物质：G_eff≈1.21G + 渗透函数 | M_DM^apparent=M·ε_C |
+
+```python
+from cosmogeo import galaxy, potential, orbit
+v_sun = potential.v_circ(8.2e3 * 3.0857e16, 1.2e41)   # 太阳位置旋转速度
+T = orbit.orbital_period(8.2e3 * 3.0857e16, 1.2e41)   # 轨道周期（年）
+galaxy.v_flat_km_s()                                    # 235 km/s
+```
+
 ## 模块
+
 
 | 模块 | 对应文章 | 输出 |
 |---|---|---|
@@ -49,6 +71,10 @@ cmb.n_s()                # → 0.965
 | `hubble` | 8.16 | H₀^geo=68.9、Λ_res=1.66e-52、τ_M、小/中/大周期、四阶段 |
 | `cmb` | 8.7 | c_s、R_η、l₁≈220、n_s≈0.965、r=0 |
 | `lensing` | 8.2 §3.2 | α_eff、M_DM^apparent=M·ε_C |
+| `galaxy` | 8.11 | v_flat≈235 km/s、R_c^gal≈11.7 kpc、壳层 β=2/α=1/4 |
+| `potential` | 8.18 | 渗透势 Φ(r)、v_circ、v_esc、r_M |
+| `distribution` | 8.18 | σ_r/σ_t/beta（对照 galpy sphericaldf） |
+| `orbit` | 8.18 | 圆轨道 L/J/Ω/T + 数值积分 |
 
 ## 验证
 
