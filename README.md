@@ -100,6 +100,8 @@ galaxy.v_flat_km_s()                                    # 235 km/s
 | `df`(动态) | — | **轨道采样**：DF 速度分布 → orbit 动态积分 |
 | `orbit`(3D) | — | **3D 轨道积分**（圆柱坐标 + 垂直振荡）+ zmax/倾角诊断 |
 | `stream` | — | **恒星流**：流粒子采样 + 数值/解析展开（对照 galpy StreamTrack） |
+| `actionangle` | — | **作用量-角完整**：(JR,Jφ,Jz) + 频率 κ/Ω/ν（对照 galpy aainv） |
+| `df`(盘精确) | — | **quasiisothermal 盘 DF**：κ/ν/J 组件 + σ_profile + 指数盘 Σ |
 
 ## 验证
 

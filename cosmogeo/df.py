@@ -91,3 +91,58 @@ def sample_orbit(r0: float, m: float, a0: float = A0, seed: float = 0.42) -> dic
     vt = v * (2.0 / 3.0) ** 0.5
     orb = integrate_orbit(r0, vr, vt, m, t_total=1.0, dt=0.01)
     return {"v_sampled": v, "vr": vr, "vt": vt, "orbit": orb}
+
+
+# ---- 盘 DF 精确化（0.10.0：对照 galpy quasiisothermaldf）----
+def quasiisothermal_df(r: float, vr: float, vphi: float, vz: float, m: float,
+                       z: float = 0.0, sigma_r: float | None = None,
+                       a0: float = A0) -> float:
+    """准等温盘分布函数（对照 galpy quasiisothermaldf）.
+
+    f = Ω/(2πκ) · Σ(R_c)/σ_z² · exp(−κJ_R/σ_R² − νJ_z/σ_z²)
+
+    几何论内禀组件：
+      - σ_R：σ_profile（盘区 v_circ/√2，8.18）
+      - σ_z：盘垂直色散（随轨道尺度，取 σ_R 的等温比例——非当前 z 的函数，
+        galpy 的 σ_z(L_z) 同此思想）
+      - κ、ν、J_R、J_z：actionangle 模块（渗透势）
+      - Σ：指数盘面密度（R_d = R_c/2 锚定）
+    返回归一化前的 DF 值（对照 galpy 的 df 评估）。
+    """
+    import math
+    from .actionangle import action_angles
+    from .distribution import sigma_profile, disk_surface_density
+    if sigma_r is None:
+        sigma_r = sigma_profile(r, m, a0)
+    sigma_z = sigma_r  # 准等温：σ_z 随轨道尺度（L_z），非当前 z
+    aa = action_angles(r, vr, vphi, vz, m, z, a0)
+    omega = aa["freq_phi"]
+    kappa = aa["freq_R"]
+    nu = aa["freq_z"]
+    Sigma = disk_surface_density(r, m, a0)
+    if sigma_z <= 0 or kappa <= 0:
+        return 0.0
+    f_rad = math.exp(-kappa * aa["JR"] / (sigma_r * sigma_r))
+    f_z = math.exp(-nu * aa["Jz"] / (sigma_z * sigma_z))
+    return omega / (2 * math.pi * kappa) * Sigma / (sigma_z * sigma_z) * f_rad * f_z
+
+
+def disk_df_sample(r0: float, m: float, n: int = 30, seed: float = 11.0,
+                   a0: float = A0) -> dict:
+    """从准等温盘 DF 采样相空间点（对照 galpy DF sampling）.
+
+    圆轨道 + 高斯弥散（σ_R、σ_z），返回 {r, vr, vphi, vz} 列表。
+    """
+    import random
+    from .potential import v_circ
+    from .distribution import sigma_profile
+    random.seed(seed)
+    v0 = v_circ(r0, m, a0)
+    sig_r = sigma_profile(r0, m, a0)
+    samples = []
+    for _ in range(n):
+        vr = random.gauss(0, sig_r)
+        vz = random.gauss(0, sig_r)
+        vphi = v0 + random.gauss(0, sig_r)
+        samples.append({"r": r0, "vr": vr, "vphi": vphi, "vz": vz})
+    return {"samples": samples, "n": n}
