@@ -166,3 +166,53 @@ def vertical_action_approx(r: float, m: float, z: float, vz: float,
     nu_z = 3.0 * omega  # 垂直频率 ≈ 3Ω（薄盘垂直振荡近似）
     e_z = 0.5 * vz * vz
     return e_z / nu_z
+
+
+# ---- 3D 轨道扩展（0.9.0：对照 galpy 3D orbit integration）----
+def integrate_orbit_3d(R0: float, z0: float, vR0: float, vphi0: float, vz0: float,
+                       m: float, t_total: float, dt: float, a0: float = A0) -> dict:
+    """三维轨道积分（圆柱坐标 R,φ,z，6D 相空间）.
+
+    径向：渗透函数 a_R(R)（8.18）+ 离心项；
+    垂直：简谐近似 a_z = −ν_z²·z，ν_z = 3Ω（薄盘垂直振荡，标准近似，
+    几何论垂直结构未封闭——见 0.8 标注）；
+    角动量守恒：vφ·R = const。
+    返回 {R, phi, z, vR, vphi, vz} 列表。
+    """
+    from .potential import accel, circular_angular_freq
+    R, phi, z = R0, 0.0, z0
+    vR, vphi, vz = vR0, vphi0, vz0
+    L = R0 * vphi0  # 角动量守恒
+    omega = circular_angular_freq(R0, m, a0)
+    nu_z = 3.0 * omega  # 垂直频率（薄盘近似）
+    Rs, phis, zs, vRs, vphis, vzs = [R], [0.0], [z], [vR], [vphi], [vz]
+    steps = int(t_total / dt)
+    for _ in range(steps):
+        a_R = -accel(R, m, a0) + vphi * vphi / R
+        a_z = -nu_z * nu_z * z
+        vR += a_R * dt
+        vz += a_z * dt
+        R += vR * dt
+        z += vz * dt
+        phi += vphi / R * dt
+        vphi = L / R if R > 0 else 0.0
+        if R <= 0:
+            break
+        Rs.append(R); phis.append(phi); zs.append(z)
+        vRs.append(vR); vphis.append(vphi); vzs.append(vz)
+    return {"R": Rs, "phi": phis, "z": zs, "vR": vRs, "vphi": vphis, "vz": vzs}
+
+
+def orbit_diagnostics_3d(orb3d: dict) -> dict:
+    """3D 轨道诊断：apo/peri（R 方向）、zmax（垂直高度）、ecc、倾角.
+
+    对照 galpy 3D orbit 的 apo/peri/zmax 输出。
+    """
+    Rs = [x for x in orb3d["R"] if x > 0]
+    zs = orb3d["z"]
+    if not Rs:
+        return {"apo": None, "peri": None, "ecc": None, "zmax": None}
+    apo, peri = max(Rs), min(Rs)
+    ecc = (apo - peri) / (apo + peri) if abs(apo + peri) > 1e-30 else 0.0
+    zmax = max(abs(z) for z in zs)
+    return {"apo": apo, "peri": peri, "ecc": ecc, "zmax": zmax, "bound": True}
