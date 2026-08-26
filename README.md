@@ -92,6 +92,7 @@ galaxy.v_flat_km_s()                                    # 235 km/s
 | `satellite` | 8.12 | 地月系统：周期比 5α、质量比 81、退行速率、潮汐锁定 |
 | `df` | 8.11/8.18 | 高斯速度 DF、σ_profile 分段、Osipkov-Merritt β(r) |
 | `dwarf` | 8.2/8.18 | 矮星系旋转曲线：core 型（无暗物质）vs NFW cusp（小尺度危机解） |
+| `expansion` | 0.14/0.15 | **动态宇宙膨胀**：八相变解析解、ε(s)/w_eff(s)、H(z)、距离模量 μ(z)、红移漂移、SN 偏离 |
 
 ## 验证
 

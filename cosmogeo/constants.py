@@ -56,3 +56,10 @@ def h0_geo_km_s_mpc() -> float:
 def lambda_res_formula() -> float:
     """Λ_res = (3π)²·a_0²/c⁴（8.14 §6.2）."""
     return LAMBDA_RES
+
+# ---- 0.14/0.15 动态宇宙学（外时间连续化与宇宙八相变） ----
+LAMBDA1_EFF = 391.05        # rad⁻²：Dirac 谱方向主本征值（0.14 §4）
+LAMBDA2_EFF = 59324.3       # rad⁻²：谱间隙方向本征值（0.14，Δλ=58933.25）
+EPS0 = LAMBDA1_EFF / LAMBDA2_EFF  # ≈ 0.00659：谱间隙比（8.3/0.15）
+C0_INFO = 0.0812 * C         # m/s：信息场内禀速度 c₀ = √(λ₁/λ₂)·c（0.14 §4.3）
+SIGMA_M_STAR = 0.4553        # σ_M*（0.15 §4.3 哈勃离散律用）

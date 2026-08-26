@@ -14,13 +14,14 @@
   - satellite:卫星系统（8.12）→ 地月周期比 5α、质量比 81、退行速率
   - df:       分布函数（8.11/8.18）→ 高斯速度 DF、σ_profile、Osipkov-Merritt β(r)
   - dwarf:    矮星系旋转曲线（8.2/8.18）→ core 型（无暗物质）vs NFW cusp
+  - expansion:动态宇宙膨胀（0.14/0.15）→ 八相变解析解、H(z)、距离模量、红移漂移
 """
 from . import (constants, rotation, hubble, cmb, lensing, galaxy, potential,
-                   distribution, orbit, solar, satellite, df, dwarf)
+                   distribution, orbit, solar, satellite, df, dwarf, expansion)
 
 __version__ = "0.4.0"
 
 __all__ = [
     "constants", "rotation", "hubble", "cmb", "lensing",
-    "galaxy", "potential", "distribution", "orbit", "solar", "satellite", "df", "dwarf", "__version__",
+    "galaxy", "potential", "distribution", "orbit", "solar", "satellite", "df", "dwarf", "expansion", "__version__",
 ]
