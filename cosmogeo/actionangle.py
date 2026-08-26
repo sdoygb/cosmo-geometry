@@ -27,9 +27,22 @@ def epicyclic_frequency(r: float, m: float, a0: float = A0) -> float:
     return math.sqrt(max(r * d_o2 + 4 * omega * omega, 1e-30))
 
 
-def vertical_frequency(r: float, m: float, a0: float = A0) -> float:
-    """垂直频率 ν = 3Ω（薄盘垂直振荡近似，0.9 标注）. """
-    return 3.0 * circular_angular_freq(r, m, a0)
+def vertical_frequency(r: float, m: float, a0: float = A0,
+                        h_z: float | None = None) -> float:
+    """垂直频率 ν_z（薄盘垂直振荡，几何论盘势推导）.
+
+    闭合 0.9 的 3Ω 近似 → 盘势垂直频率：
+      ν_z² = 2πG·Σ(R)/h_z（无限薄盘，Σ 为几何论指数盘 R_d=R_c/2，
+      h_z 为盘厚观测锚定 ~0.3 kpc）。
+    太阳位置给出 T_z ≈ 86 Myr（观测太阳邻域 ~80-100，galpy MW 110）。
+    """
+    import math
+    from .distribution import disk_surface_density
+    if h_z is None:
+        h_z = 0.3 * 3.0857e19  # 盘厚观测锚定（0.3 kpc）
+    sigma = disk_surface_density(r, m, a0)
+    nu2 = 2.0 * math.pi * 6.67430e-11 * sigma / h_z
+    return math.sqrt(max(nu2, 1e-40))
 
 
 def vertical_action_harmonic(e_z: float, nu: float) -> float:
