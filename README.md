@@ -41,6 +41,19 @@ cmb.first_peak_l()       # → 220.0
 cmb.n_s()                # → 0.965
 ```
 
+```python
+from cosmogeo import solar, satellite
+
+# 太阳系（8.10）
+solar.r0()                          # 0.3087 AU（提丢斯-波得标度常数）
+solar.planet_table()                # 行星轨道预言表（冥王星偏差 0.09%）
+solar.orbital_fine_structure(4)     # 木星壳层：S_orbital = S_e·16
+
+# 地月系统（8.12）
+satellite.period_ratio_theory()     # 5α ≈ 0.036496（观测 0.036501，偏差 0.013%）
+satellite.mass_ratio_theory()       # 81（观测 81.3）
+```
+
 ## 对照 galpy：目的 → 几何论实现
 
 我们曾向 [galpy](https://github.com/jobovy/galpy)（Galactic Dynamics in python，★284，Jo Bovy）提交过 PR（#1345，sphericaldf `ro=` 修复，作者确认正确但嫌扩展过大关闭）。galpy 想达到的最终目的——**银河系动力学建模：轨道积分、分布函数、作用量-角坐标、暗物质晕拟合**——用几何论直接实现：
@@ -75,6 +88,8 @@ galaxy.v_flat_km_s()                                    # 235 km/s
 | `potential` | 8.18 | 渗透势 Φ(r)、v_circ、v_esc、r_M |
 | `distribution` | 8.18 | σ_r/σ_t/beta（对照 galpy sphericaldf） |
 | `orbit` | 8.18 | 圆轨道 L/J/Ω/T + 数值积分 |
+| `solar` | 8.10 | 提丢斯-波得 r₀=0.3087 AU、行星预言表、S_orbital=S_e·2ⁿ、共振、ETNOs ω=247.28° |
+| `satellite` | 8.12 | 地月系统：周期比 5α、质量比 81、退行速率、潮汐锁定 |
 
 ## 验证
 

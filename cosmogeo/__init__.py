@@ -10,12 +10,15 @@
   - potential:渗透函数势（8.18）→ Φ(r)、v_circ、v_esc
   - distribution: 速度矩（8.18）→ σ_r/σ_t/beta（对照 galpy sphericaldf）
   - orbit:    圆轨道闭式 + 数值积分（对照 galpy orbit integration）
+  - solar:    太阳系精密轨道（8.10）→ r₀=0.3087 AU、行星预言表、5α 周期比
+  - satellite:卫星系统（8.12）→ 地月周期比 5α、质量比 81、退行速率
 """
-from . import constants, rotation, hubble, cmb, lensing, galaxy, potential, distribution, orbit
+from . import (constants, rotation, hubble, cmb, lensing, galaxy, potential,
+                   distribution, orbit, solar, satellite)
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "constants", "rotation", "hubble", "cmb", "lensing",
-    "galaxy", "potential", "distribution", "orbit", "__version__",
+    "galaxy", "potential", "distribution", "orbit", "solar", "satellite", "__version__",
 ]
