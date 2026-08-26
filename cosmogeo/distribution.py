@@ -86,3 +86,28 @@ def potential_permeation_radius(m: float, a0: float = A0) -> float:
     """渗透半径 r_M = √(G_eff·M/a_0)（复用 potential 模块）. """
     from .potential import permeation_radius
     return permeation_radius(m, a0)
+
+
+# ---- 盘垂直结构（0.8.0：对照 galpy quasiisothermaldf 的垂直部分）----
+def disk_surface_density(r: float, m: float, a0: float = A0) -> float:
+    """指数盘面密度 Σ(r) = Σ₀·exp(−r/R_d)（标准盘；几何论壳层锚定 R_d ≈ R_c/2）.
+
+    8.11 壳层结构给出盘尺度锚点 R_d ≈ R_c^gal/2 ≈ 5.9 kpc。
+    归一化 Σ₀ 由总质量 M 确定：Σ₀ = M/(2πR_d²)（积分归一）。
+    """
+    import math
+    from .galaxy import transition_radius_kpc
+    r_d = transition_radius_kpc() * 3.0857e19  # R_c/2 ≈ 5.9 kpc（8.11 §7.1）
+    sigma0 = m / (2.0 * math.pi * r_d * r_d)
+    return sigma0 * math.exp(-r / r_d)
+
+
+def vertical_sigma_iso(z: float, sigma_z0: float, h_z: float) -> float:
+    """垂直速度色散（准等温盘）：σ_z(z) = σ_z0·exp(−|z|/2h_z).
+
+    对照 galpy quasiisothermaldf 的垂直色散（标准：随高度衰减）。
+    几何论当前未封闭垂直结构（8.11 仅给出盘/晕分界），标注为
+    标准等温盘近似。h_z 为垂直标长（薄盘 ~0.3 kpc）。
+    """
+    import math
+    return sigma_z0 * math.exp(-abs(z) / (2.0 * h_z))

@@ -67,3 +67,43 @@ def v_esc(r: float, m: float, a0: float = A0, r_boundary: float | None = None) -
 def circular_angular_freq(r: float, m: float, a0: float = A0) -> float:
     """圆轨道角频率 Ω = v_circ/r（对照 galpy orbit 的 Omega）."""
     return v_circ(r, m, a0) / r
+
+
+# ---- 势家族扩展（0.8.0：对照 galpy potential 模块）----
+def mass_within(r: float, m: float, a0: float = A0) -> float:
+    """半径 r 内质量 M(<r) = r²·a(r)/G_eff（从渗透函数反推，圆轨道定义）.
+
+    对照 galpy mass profile 目的——给定势反推质量分布。
+    渗透函数下：内区 M(<r) ≈ M（重子总质量）；外区深 MOND 有效质量增长。
+    """
+    from .rotation import g_eff
+    return accel(r, m, a0) * r * r / g_eff()
+
+
+def kepler_potential(r: float, m: float) -> float:
+    """Kepler 势 Φ = −G_eff·M/r（标准，对照 galpy KeplerPotential）."""
+    from .rotation import g_eff
+    return -g_eff() * m / r
+
+
+def logarithmic_potential(r: float, v_c: float, r_core: float = 0.0) -> float:
+    """对数势（晕）Φ = v_c²·ln(r)（v_c 常数 → 平坦旋转曲线，与渗透函数平坦区对应）.
+
+    对照 galpy LogarithmicHaloPotential。几何论对应：渗透函数深 MOND 区
+    v 平坦 → 有效对数势。
+    """
+    import math
+    return v_c * v_c * math.log(max(r, r_core if r_core > 0 else 1e-10))
+
+
+def plummer_potential(r: float, m: float, b: float) -> float:
+    """Plummer 势 Φ = −G_eff·M/√(r²+b²)（球状，对照 galpy PlummerPotential）."""
+    from .rotation import g_eff
+    return -g_eff() * m / (r * r + b * b) ** 0.5
+
+
+def plummer_density(r: float, m: float, b: float) -> float:
+    """Plummer 密度 ρ = (3M/4πb³)·(1+r²/b²)^(−5/2)."""
+    import math
+    rho0 = 3.0 * m / (4.0 * math.pi * b ** 3)
+    return rho0 * (1.0 + (r / b) ** 2) ** (-2.5)

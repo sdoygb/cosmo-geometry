@@ -116,3 +116,53 @@ def radial_action(energy: float, angular_momentum: float, m: float,
         total += 0.5 * (prev_pr + pr) * (rr - prev_r)
         prev_r, prev_pr = rr, pr
     return total / math.pi
+
+
+# ---- 轨道诊断扩展（0.8.0：对照 galpy orbit 标准输出）----
+def orbit_diagnostics(orb: dict) -> dict:
+    """轨道诊断：apoapsis/periapsis/偏心率（对照 galpy orbit 的 apo/peri/e）.
+
+    orb 为 integrate_orbit 返回的 {r, theta, vr, vt}。
+    圆轨道：apo ≈ peri、e ≈ 0；椭圆：e ∈ (0,1)；逃逸：无界。
+    """
+    rs = [x for x in orb["r"] if x > 0]
+    if not rs:
+        return {"apo": None, "peri": None, "ecc": None, "bound": False}
+    apo = max(rs)
+    peri = min(rs)
+    if abs(apo + peri) < 1e-30:
+        return {"apo": apo, "peri": peri, "ecc": 0.0, "bound": True}
+    ecc = (apo - peri) / (apo + peri)
+    return {"apo": apo, "peri": peri, "ecc": ecc, "bound": True}
+
+
+def classify_orbit(ecc: float) -> str:
+    """轨道分类（对照 galpy orbit classification）."""
+    if ecc is None:
+        return "逃逸/未束缚"
+    if ecc < 0.05:
+        return "圆轨道"
+    if ecc < 0.8:
+        return "椭圆轨道"
+    return "高偏心轨道"
+
+
+def j_phi(r: float, vt: float) -> float:
+    """角动量 J_φ = L_z = r·v_t（轴对称守恒量，对照 galpy actionAngle 的 Jφ）."""
+    return r * vt
+
+
+def vertical_action_approx(r: float, m: float, z: float, vz: float,
+                           a0: float = A0) -> float:
+    """垂直作用量 J_z 近似（近盘面谐波近似）.
+
+    垂直频率 ν_z ≈ √(∂²Φ/∂z²)（盘势），J_z = E_z/ν_z（谐波）。
+    简化：取 ν_z = 2π/T 的 3 倍（各向异性盘的垂直-水平频率比），
+    诚实标注为量级近似（galpy 的 J_z 是精确 Stäckel 计算）。
+    """
+    from .potential import v_circ, circular_angular_freq
+    import math
+    omega = circular_angular_freq(r, m, a0)
+    nu_z = 3.0 * omega  # 垂直频率 ≈ 3Ω（薄盘垂直振荡近似）
+    e_z = 0.5 * vz * vz
+    return e_z / nu_z
