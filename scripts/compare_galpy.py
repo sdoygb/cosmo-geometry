@@ -125,25 +125,39 @@ print(f"galpy 椭圆轨道: r 范围 [{r_gal.min():.2f}, {r_gal.max():.2f}] kpc,
 print(f"几何论椭圆轨道: r 范围 [{r_geo_arr.min():.2f}, {r_geo_arr.max():.2f}] kpc, "
       f"近日点数 {len(peri_geo)}, 进动 {prec_geo_deg[0] if prec_geo_deg else 0:.3f} 度/圈")
 
-# 图：椭圆轨道 + 进动
+# 图：只画前 3 圈（进动旋转的椭圆叠加会变成圆环——必须截断才可见椭圆与进动）
+N3 = 3  # 圈数
+# galpy：前 3 圈的时间 ≈ 3×周期（椭圆周期 ~140 Myr）
+ts3 = np.linspace(0, 3 * 0.142, 600) * u.Gyr  # 3×142 Myr
+x3 = np.array(o_galpy.x(ts3)); y3 = np.array(o_galpy.y(ts3))
+# 几何论：前 3 圈（用 theta 累计 3×2π）
+th_acc = np.unwrap(th_geo_arr)
+mask3 = th_acc <= 3 * 2 * np.pi + 0.1
+x_geo_arr = r_geo_arr * np.cos(th_geo_arr)
+y_geo_arr = r_geo_arr * np.sin(th_geo_arr)
+x3g = x_geo_arr[mask3]
+y3g = y_geo_arr[mask3]
+
 fig2, ax2 = plt.subplots(1, 2, figsize=(13, 5))
-ax2[0].plot(xgal, ygal, "b-", lw=0.8, alpha=0.7, label="galpy（MWPotential2014）")
+ax2[0].plot(x3, y3, "b-", lw=1.2, label="galpy（MWPotential2014）")
 if peri_gal:
-    p0 = int(peri_gal[0])
-    ax2[0].scatter([xgal[p0]], [ygal[p0]], color="k", s=30, label="近日点")
-ax2[0].set_title(f"galpy 椭圆轨道（进动 {prec_gal_deg[0] if prec_gal_deg else 0:.2f}°/圈）")
+    for k in range(min(3, len(peri_gal))):
+        pk = int(peri_gal[k])
+        if xgal[pk] ** 2 + ygal[pk] ** 2 < 100:
+            ax2[0].plot(xgal[pk], ygal[pk], "ko", ms=6)
+ax2[0].set_title(f"galpy 前3圈（进动 {prec_gal_deg[0] if prec_gal_deg else 0:.1f}°/圈）")
 ax2[0].set_xlabel("x (kpc)"); ax2[0].set_ylabel("y (kpc)")
-ax2[0].set_aspect("equal"); ax2[0].legend(fontsize=8)
-x_geo = r_geo_arr * np.cos(th_geo_arr)
-y_geo = r_geo_arr * np.sin(th_geo_arr)
-ax2[1].plot(x_geo, y_geo, "r-", lw=0.8, alpha=0.7, label="几何论（渗透势）")
+ax2[0].set_aspect("equal")
+ax2[1].plot(x3g, y3g, "r-", lw=1.2, label="几何论（渗透势）")
 if peri_geo:
-    pg0 = int(peri_geo[0])
-    ax2[1].scatter([x_geo[pg0]], [y_geo[pg0]], color="k", s=30, label="近日点")
-ax2[1].set_title(f"几何论椭圆轨道（进动 {prec_geo_deg[0] if prec_geo_deg else 0:.2f}°/圈）")
+    for k in range(min(3, len(peri_geo))):
+        pk = int(peri_geo[k])
+        if x_geo_arr[pk] ** 2 + y_geo_arr[pk] ** 2 < 100:
+            ax2[1].plot(x_geo_arr[pk], y_geo_arr[pk], "ko", ms=6)
+ax2[1].set_title(f"几何论前3圈（进动 {prec_geo_deg[0] if prec_geo_deg else 0:.1f}°/圈）")
 ax2[1].set_xlabel("x (kpc)"); ax2[1].set_ylabel("y (kpc)")
-ax2[1].set_aspect("equal"); ax2[1].legend(fontsize=8)
+ax2[1].set_aspect("equal")
 plt.tight_layout()
 plt.savefig("orbit_compare.png", dpi=120)
-print("图2 orbit_compare.png（椭圆+进动）已保存")
+print("图2 orbit_compare.png（前3圈椭圆+进动）已保存")
 
