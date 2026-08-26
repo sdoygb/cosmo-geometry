@@ -81,23 +81,19 @@ def mass_within(r: float, m: float, a0: float = A0) -> float:
 
 
 def kepler_potential(r: float, m: float) -> float:
-    """Kepler 势 Φ = −G_eff·M/r（标准，对照 galpy KeplerPotential）."""
+    """Kepler 势 Φ = −G_eff·M/r（🔧 对照模型——非几何论主路径，仅供对比）."""
     from .rotation import g_eff
     return -g_eff() * m / r
 
 
 def logarithmic_potential(r: float, v_c: float, r_core: float = 0.0) -> float:
-    """对数势（晕）Φ = v_c²·ln(r)（v_c 常数 → 平坦旋转曲线，与渗透函数平坦区对应）.
-
-    对照 galpy LogarithmicHaloPotential。几何论对应：渗透函数深 MOND 区
-    v 平坦 → 有效对数势。
-    """
+    """对数势（晕）Φ = v_c²·ln(r)（🔧 对照模型——几何论主路径为渗透势 8.18）."""
     import math
     return v_c * v_c * math.log(max(r, r_core if r_core > 0 else 1e-10))
 
 
 def plummer_potential(r: float, m: float, b: float) -> float:
-    """Plummer 势 Φ = −G_eff·M/√(r²+b²)（球状，对照 galpy PlummerPotential）."""
+    """Plummer 势 Φ = −G_eff·M/√(r²+b²)（🔧 对照模型——非几何论主路径）."""
     from .rotation import g_eff
     return -g_eff() * m / (r * r + b * b) ** 0.5
 

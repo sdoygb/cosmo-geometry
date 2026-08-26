@@ -82,6 +82,10 @@ T = orbit.orbital_period(8.2e3 * 3.0857e16, 1.2e41)   # 轨道周期（年）
 galaxy.v_flat_km_s()                                    # 235 km/s
 ```
 
+## 计算来源
+
+物理内容 100% 几何论（🔵 定理 / 📊 观测锚定输入 / 🔧 普适数学工具），完整分层见 [docs/SOURCES.md](docs/SOURCES.md)。
+
 ## 模块
 
 

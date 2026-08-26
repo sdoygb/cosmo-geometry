@@ -52,11 +52,8 @@ def inflection_points() -> list:
 
 
 def hubble_hz(z: float, h0_km_s_mpc: float | None = None) -> float:
-    """哈勃参数红移演化 H(z)（0.15 §4.3：非纯 ΛCDM 常数）.
-
-    标准形式 H(z)=H₀√(Ω_b(1+z)³+Ω_r(1+z)⁴+Ω_I)（Λ=0，8.3），
-    ℐ 扇区 Ω_I 近似常数（扩散稳态）。
-    """
+    """哈勃参数红移演化 H(z)（🔵 几何论组件：Λ=0（8.3）、Ω_I^eff=0.68（8.3 扩散稳态）、
+    Ω_b/Ω_r（8.3 扇区参数）、Ω_k（𝒞 扇区曲率）；🔧 FLRW 组合形式为几何论采用的框架）. """
     h0 = h0_km_s_mpc if h0_km_s_mpc is not None else h0_geo_km_s_mpc()
     e2 = (OMEGA_B * (1 + z) ** 3 + OMEGA_R * (1 + z) ** 4
           + OMEGA_I + OMEGA_K * (1 + z) ** 2)
